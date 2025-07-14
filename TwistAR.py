@@ -1,19 +1,18 @@
 import cv2
-# from google.colab.patches import cv2_imshow # the cv2.imshow() function doesn't work properly on Colab, so we use this patch
 import numpy as np
 import time
 import mediapipe as mp
 import socket
-# from google.colab.output import eval_js
-# from base64 import b64decode, b64encode
-# from IPython.display import display, Javascript, Image
-# import PIL
-# import io
-# import html
 import random
+import argparse
 from ECE16Lib.Communication import Communication
 
-comms = Communication("/dev/cu.ECE16",115200)
+parser = argparse.ArgumentParser(description="Run the TwistAR game")
+parser.add_argument("--port", default="/dev/cu.ECE16", help="Serial port for the controller")
+parser.add_argument("--baud", type=int, default=115200, help="Baud rate for the controller")
+args = parser.parse_args()
+
+comms = Communication(args.port, args.baud)
 comms.setup()
 comms.clear()
 mpDraw = mp.solutions.drawing_utils
@@ -30,6 +29,30 @@ current_limb = None
 current_color = None
 colors_list = ["Red","Blue","Green","Yellow"]
 limbs_list = ["Left Hand", "Right Hand", "Left Leg", "Right Leg"]
+
+COLOR_MAP = {
+    "Red": (0, 0, 255),
+    "Blue": (255, 0, 0),
+    "Green": (0, 255, 0),
+    "Yellow": (0, 255, 255),
+}
+
+LIMB_OFFSETS = {
+    "Left Hand": 10,
+    "Right Hand": 110,
+    "Left Leg": 220,
+    "Right Leg": 330,
+}
+
+def draw_limb_info(img, limb_label, color):
+    offset = LIMB_OFFSETS.get(limb_label, 10)
+    abbr = ''.join([word[0] for word in limb_label.split()])
+    img = cv2.putText(img, abbr, (offset, 50), cv2.FONT_HERSHEY_SIMPLEX, 1,
+                      (255, 255, 255), 1, cv2.LINE_AA)
+    if color in COLOR_MAP:
+        img = cv2.putText(img, color, (offset, 80), cv2.FONT_HERSHEY_SIMPLEX, 1,
+                          COLOR_MAP[color], 1, cv2.LINE_AA)
+    return img
 
 def spinner():
   color = random.choice(colors_list)
@@ -200,46 +223,7 @@ while True:
          img = cv2.rectangle(img,(110,10),(220,100),(130,130,130),thickness=cv2.FILLED)
          img = cv2.rectangle(img,(220,10),(330,100),(100,100,100),thickness=cv2.FILLED)
          img = cv2.rectangle(img,(330,10),(440,100),(70,70,70),thickness=cv2.FILLED)
-         if(limb == "Left Hand"):
-          img = cv2.putText(img,"LH",(10,50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,cv2.LINE_AA)
-          if(color == "Red"):
-            img = cv2.putText(img,color,(10,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,0,255),1,cv2.LINE_AA)
-          elif(color == "Blue"):
-            img = cv2.putText(img,color,(10,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,0,0),1,cv2.LINE_AA)
-          elif(color == "Green"):
-            img = cv2.putText(img,color,(10,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,0),1,cv2.LINE_AA)
-          elif(color == "Yellow"):
-            img = cv2.putText(img,color,(10,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,255),1,cv2.LINE_AA)
-         if(limb == "Right Hand"):
-          img = cv2.putText(img,"RH",(110,50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,cv2.LINE_AA)
-          if(color == "Red"):
-            img = cv2.putText(img,color,(110,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,0,255),1,cv2.LINE_AA)
-          elif(color == "Blue"):
-            img = cv2.putText(img,color,(110,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,0,0),1,cv2.LINE_AA)
-          elif(color == "Green"):
-            img = cv2.putText(img,color,(110,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,0),1,cv2.LINE_AA)
-          elif(color == "Yellow"):
-            img = cv2.putText(img,color,(110,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,255),1,cv2.LINE_AA)
-         if(limb == "Left Leg"):
-          img = cv2.putText(img,"LL",(220,50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,cv2.LINE_AA)
-          if(color == "Red"):
-            img = cv2.putText(img,color,(220,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,0,255),1,cv2.LINE_AA)
-          elif(color == "Blue"):
-            img = cv2.putText(img,color,(220,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,0,0),1,cv2.LINE_AA)
-          elif(color == "Green"):
-            img = cv2.putText(img,color,(220,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,0),1,cv2.LINE_AA)
-          elif(color == "Yellow"):
-            img = cv2.putText(img,color,(220,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,255),1,cv2.LINE_AA)
-         if(limb == "Right Leg"):
-          img = cv2.putText(img,"RL",(330,50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),1,cv2.LINE_AA)
-          if(color == "Red"):
-            img = cv2.putText(img,color,(330,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,0,255),1,cv2.LINE_AA)
-          elif(color == "Blue"):
-            img = cv2.putText(img,color,(330,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,0,0),1,cv2.LINE_AA)
-          elif(color == "Green"):
-            img = cv2.putText(img,color,(330,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,0),1,cv2.LINE_AA)
-          elif(color == "Yellow"):
-            img = cv2.putText(img,color,(330,80), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,255),1,cv2.LINE_AA)
+         img = draw_limb_info(img, limb, color)
         
          img = cv2.putText(img,"Level " + str(state),(250,250), cv2.FONT_HERSHEY_SIMPLEX, 2,(255,255,255),2,cv2.LINE_AA)
          num_prev_correct = 0
